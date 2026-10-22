@@ -8,6 +8,39 @@ y **promoción automática** del nivel L+1 cuando un equipo resuelve el nivel L.
 
 ---
 
+## Quickstart — clonar y arrancar en un servidor nuevo
+
+```bash
+# 1. Clonar este repo
+git clone https://github.com/exxotyc/ctf_tarreo.git ctf-tarreo
+cd ctf-tarreo
+
+# 2. Clonar CTFd APARTE (no viene en este repo) donde quieras, p.ej.:
+git clone https://github.com/CTFd/CTFd.git ~/CTFd
+
+# 3. Preparar la config (bootstrap también la crea sola si falta)
+cp config.env.example config.env
+#    editar config.env:
+#      CTFD_REPO=~/CTFd           (ruta real de CTFd en ESTE server)
+#      SERVER_IP=10.10.0.1        (IP del server en la red del evento)
+#      NUM_TEAMS=5                (equipos)
+#      CTFD_ADMIN_PASSWORD=...    (cámbiala)
+
+# 4. Requisitos: Docker + Compose v2, python3 con 'requests'
+python3 -c 'import requests' || pip install requests
+
+# 5. Arrancar TODO (idempotente)
+./bootstrap.sh
+```
+
+> Sin internet en el server del evento: pre-carga las imágenes con `docker save`/`docker load`
+> (ver §1.bis) antes de correr `bootstrap.sh`.
+>
+> `config.env`, `flags/`, `instances/`, `logs/` están gitignored: contienen secretos/estado
+> y se generan en cada server. El repo de CTFd trae su propio `.gitignore` (cubre `.data/`).
+
+---
+
 ## 0. Decisiones de diseño (confirmadas)
 
 | Tema | Decisión |
