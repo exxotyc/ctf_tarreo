@@ -1,0 +1,23 @@
+# Secretos y estado del evento (NUNCA subir)
+# config.env: token CTFd + contraseña admin en claro
+config.env
+# flags reales del evento (se regeneran con generate_flags.sh)
+flags/
+# composes generados por equipo+nivel (se regeneran)
+instances/
+# logs del watcher / first blood
+logs/
+# carpeta runtime local de CTFd
+ctfd/
+
+# .env de los retos
+**/.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Varios
+nohup.out
+.data/
+*.tar
