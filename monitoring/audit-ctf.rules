@@ -1,0 +1,33 @@
+# ============================================================
+#  audit-ctf.rules — reglas auditd para ver el RCE/LFI del CTF
+# ------------------------------------------------------------
+#  Se instala en el HOST del evento (donde corre Docker). El kernel es
+#  compartido, así que auditd ve también los procesos DENTRO de los
+#  contenedores y los accesos a los inodos de las flags (bind-mount).
+#
+#  Instalar:
+#     sudo cp monitoring/audit-ctf.rules /etc/audit/rules.d/ctf.rules
+#     # EDITA la ruta CTF_FLAGS abajo a la real del host (BASE/flags)
+#     sudo augenrules --load    # o: sudo auditctl -R /etc/audit/rules.d/ctf.rules
+#     sudo systemctl enable --now auditd
+#
+#  Wazuh ingiere /var/log/audit/audit.log (ver ossec-agent-snippet.conf) y
+#  las reglas de monitoring/local_rules.xml levantan las alertas.
+# ============================================================
+
+# --- 1) LECTURA de las flags (la "captura") --------------------------------
+# Vigila lecturas sobre el directorio de flags del host. Como las flags se
+# montan (bind) dentro de cada contenedor, leer /flag.txt en el contenedor
+# accede al MISMO inodo y dispara este evento.
+#   >>> AJUSTA esta ruta a la real del host (p.ej. /opt/ctf-tarreo/flags) <<<
+-w /home/ctf/ctf-tarreo/flags -p r -k ctf_flag_read
+
+# --- 2) EJECUCIÓN de procesos (RCE materializándose) -----------------------
+# execve en todo el host (incluye procesos de los contenedores). Verboso pero
+# oro para forense; las reglas Wazuh filtran lo sospechoso (sh, nc, cat flag…).
+-a always,exit -F arch=b64 -S execve -k ctf_exec
+-a always,exit -F arch=b32 -S execve -k ctf_exec
+
+# --- 3) Conexiones salientes (reverse shells / callbacks) ------------------
+# connect() saliente: ayuda a ver una reverse shell de un target comprometido.
+-a always,exit -F arch=b64 -S connect -k ctf_connect

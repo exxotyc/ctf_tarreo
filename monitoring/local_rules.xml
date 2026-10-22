@@ -1,0 +1,57 @@
+<!--
+  local_rules.xml : reglas Wazuh para el CTF Tarreo
+  Se instala en el MANAGER de Wazuh:
+     sudo cp monitoring/local_rules.xml /var/ossec/etc/rules/local_rules.xml
+     sudo systemctl restart wazuh-manager
+
+  Depende de que auditd (monitoring/audit-ctf.rules) emita los eventos con
+  los keys ctf_flag_read / ctf_exec / ctf_connect, y de que Wazuh ingiera
+  /var/log/audit/audit.log (ver ossec-agent-snippet.conf).
+
+  IDs locales en el rango 100000+ (reservado para reglas propias).
+-->
+<group name="ctf,ctf_tarreo,">
+
+  <!-- CAPTURA DE FLAG: alguien leyó un archivo de flag -->
+  <rule id="100100" level="12">
+    <if_group>audit</if_group>
+    <field name="audit.key">ctf_flag_read</field>
+    <description>CTF: lectura de una FLAG (posible captura) por $(audit.exe)</description>
+    <group>ctf_flag_read,gdpr_IV_30.1.g,</group>
+  </rule>
+
+  <!-- RCE: ejecución de binarios típicos de explotación dentro de un target -->
+  <rule id="100110" level="10">
+    <if_group>audit</if_group>
+    <field name="audit.key">ctf_exec</field>
+    <field name="audit.exe">.*/(nc|ncat|netcat|bash|sh|dash|python|python3|perl|socat|wget|curl)$</field>
+    <description>CTF: ejecución sospechosa (RCE) -> $(audit.exe)</description>
+    <group>ctf_rce,</group>
+  </rule>
+
+  <!-- Lectura explícita de /flag.txt vía comando (cat/less/head de la flag) -->
+  <rule id="100111" level="12">
+    <if_sid>100110</if_sid>
+    <field name="audit.execve.a1">flag.txt</field>
+    <description>CTF: comando leyendo flag.txt ($(audit.exe)) -> captura probable</description>
+    <group>ctf_flag_read,ctf_rce,</group>
+  </rule>
+
+  <!-- Reverse shell: conexión saliente desde un proceso de shell -->
+  <rule id="100120" level="12">
+    <if_group>audit</if_group>
+    <field name="audit.key">ctf_connect</field>
+    <field name="audit.exe">.*/(bash|sh|dash|nc|ncat|socat|python|python3|perl)$</field>
+    <description>CTF: conexión saliente desde shell (posible reverse shell) -> $(audit.exe)</description>
+    <group>ctf_revshell,</group>
+  </rule>
+
+  <!-- FIM: creación de webshell en el webroot de php2shell o Tomcat -->
+  <rule id="100130" level="10">
+    <if_group>syscheck</if_group>
+    <field name="file">.*(\.jsp|sess_.*|\.php)$</field>
+    <description>CTF: archivo sospechoso creado/modificado (webshell?) -> $(file)</description>
+    <group>ctf_webshell,syscheck,</group>
+  </rule>
+
+</group>

@@ -209,6 +209,7 @@ scripts/teardown.sh --ctfd    # instancias + CTFd
 | `scripts/watch_and_promote.py` | Polling a CTFd; promueve L→L+1; loguea first-blood. |
 | `scripts/teardown.sh [--ctfd|--all]` | Baja y limpia todo (`down -v`). |
 | `scripts/firewall_isolation.sh {apply|clear|status|print}` | Firewall por IP: cada equipo solo alcanza SUS puertos (sudo). |
+| `scripts/block_ai_egress.sh {apply|clear|print|test}` | Sinkhole DNS de dominios de IA (ver `monitoring/`). |
 
 ---
 

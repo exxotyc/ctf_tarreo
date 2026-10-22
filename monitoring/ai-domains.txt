@@ -1,0 +1,33 @@
+# Dominios de servicios de IA a bloquear durante el evento.
+# Uno por línea; '#' = comentario. Amplía según necesites.
+# OJO: el bloqueo por DNS es un DISUASIVO, no es a prueba de balas
+# (DoH, DNS hardcodeado, VPN o datos móviles lo saltan). Combínalo con
+# proctoring y con bloquear resolvers DoH conocidos.
+openai.com
+chatgpt.com
+oaistatic.com
+oaiusercontent.com
+claude.ai
+anthropic.com
+gemini.google.com
+bard.google.com
+copilot.microsoft.com
+bing.com
+perplexity.ai
+poe.com
+huggingface.co
+cohere.com
+mistral.ai
+deepseek.com
+x.ai
+grok.com
+character.ai
+you.com
+phind.com
+codeium.com
+tabnine.com
+blackbox.ai
+# Resolvers DoH comunes (para que no esquiven el DNS local)
+cloudflare-dns.com
+dns.google
+dns.quad9.net
