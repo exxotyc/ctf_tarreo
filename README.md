@@ -207,7 +207,37 @@ scripts/teardown.sh --ctfd    # instancias + CTFd
 | `scripts/start_ctfd.sh` | Levanta CTFd desde el repo ya clonado (`CTFD_REPO`). |
 | `scripts/seed_ctfd.py` | Crea 5 challenges (100/150/200/250/300) y carga todas las flags por equipo. Idempotente. |
 | `scripts/watch_and_promote.py` | Polling a CTFd; promueve L→L+1; loguea first-blood. |
+| `scripts/deploy_target.sh <eq> <lvl>` | Decide local vs SSH: despliega en la VM del equipo (Propuesta 2) o local. |
+| `scripts/provision_team_vm.sh [eq]` | Copia por SSH el repo + solo las flags de ese equipo a su VM. |
 | `scripts/teardown.sh [--ctfd|--all]` | Baja y limpia todo (`down -v`). |
+
+### Modo distribuido (Propuesta 2: CTFd central + 1 VM de targets por equipo)
+
+Arquitectura: **CTFd + `watch_and_promote.py` viven en la máquina de gestión (OOB)**; los
+contenedores de cada equipo corren en **su propia VM** (VLAN 250). El scoreboard sale de CTFd
+(los equipos envían la flag al `:8000` central); el watcher lee la API de CTFd **localmente**,
+identifica equipo+nivel por el **valor de la flag** y despliega el nivel L+1 **por SSH** en la
+VM de ese equipo. No se expone el socket de Docker (solo SSH por el plano de gestión).
+
+```bash
+# En la máquina CENTRAL (gestión):
+#  config.env:
+#    DEPLOY_MODE=ssh
+#    SSH_USER=ctf   SSH_KEY=~/.ssh/ctf_oob   REMOTE_BASE=/home/ctf/ctf-tarreo
+#    TEAM1_HOST=10.20.0.11  TEAM2_HOST=10.20.0.12  ...   (IPs de gestión de cada VM)
+scripts/generate_flags.sh          # genera TODAS las flags (central)
+scripts/provision_team_vm.sh       # envía repo + flags propias a cada VM
+scripts/start_ctfd.sh && python3 scripts/setup_ctfd_admin.py && python3 scripts/seed_ctfd.py
+scripts/start_all_level1.sh        # levanta L1 en la VM de cada equipo (por SSH)
+nohup python3 scripts/watch_and_promote.py >> logs/watch.out 2>&1 &
+```
+
+Cada **VM de equipo** solo necesita Docker + Compose v2 y el repo+sus flags (lo deja
+`provision_team_vm.sh`). No corre CTFd ni el watcher. Requisito: clave SSH de la máquina
+central autorizada en cada VM por la interfaz de gestión.
+
+> `DEPLOY_MODE=local` (default) = todo en una sola máquina, como la Propuesta 1. El cambio es
+> transparente: `start_all_level1.sh` y el watcher llaman a `deploy_target.sh`, que enruta.
 
 ---
 

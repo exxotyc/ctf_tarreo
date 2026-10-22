@@ -44,6 +44,11 @@ Variantes: `--no-watch` (sin promotor), `--fresh` (regenera flags desde cero).
 - **Promoción:** `watch_and_promote.py` hace polling a CTFd; identifica equipo+nivel por el
   **valor de la flag enviada** (cada una es única) y despliega el nivel L+1 de ese equipo.
   Logs en `logs/promotions.log` y `logs/firstblood.log`.
+- **Modo distribuido (Propuesta 2):** con `DEPLOY_MODE=ssh` + `TEAM<N>_HOST` en `config.env`,
+  CTFd y el watcher viven en la máquina central (gestión/OOB) y cada equipo tiene su VM de
+  targets (VLAN 250). El watcher despliega L+1 por SSH (`deploy_target.sh`) en la VM del equipo;
+  `provision_team_vm.sh` siembra repo+flags en cada VM. El scoring SIEMPRE sale de CTFd (no se
+  leen logs de las VMs). `DEPLOY_MODE=local` (default) = todo en una máquina (Propuesta 1).
 
 ### Niveles
 | L | Carpeta `cves/` | Vuln | Tipo | Puerto interno |
@@ -64,6 +69,8 @@ Variantes: `--no-watch` (sin promotor), `--fresh` (regenera flags desde cero).
 - `scripts/setup_ctfd_admin.py` — crea admin y genera token API → `config.env`.
 - `scripts/seed_ctfd.py` — crea 5 challenges (100/150/200/250/300) + todas las flags.
 - `scripts/watch_and_promote.py` — promotor automático (correr en background).
+- `scripts/deploy_target.sh <eq> <lvl>` — enruta el deploy: local o SSH a la VM del equipo.
+- `scripts/provision_team_vm.sh [eq]` — copia por SSH repo + flags propias a cada VM de equipo.
 - `scripts/teardown.sh [--ctfd|--all]` — baja y limpia (`down -v`).
 - `scripts/ctf_common.py` — utilidades compartidas (carga config, cliente CTFd API).
 
