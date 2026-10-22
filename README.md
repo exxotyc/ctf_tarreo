@@ -205,6 +205,7 @@ scripts/teardown.sh --ctfd    # instancias + CTFd
 | `scripts/deploy_level.sh <eq> <lvl>` | Genera el compose de esa instancia y la levanta (`-p teamN_lvlL`). Idempotente. `DRY_RUN=1` solo renderiza. |
 | `scripts/start_all_level1.sh` | Nivel 1 de todos los equipos. |
 | `scripts/start_ctfd.sh` | Levanta CTFd desde el repo ya clonado (`CTFD_REPO`). |
+| `scripts/setup_ctfd.sh [--no-seed]` | **Solo CTFd**: levanta + admin/token + seed, en un comando (idempotente). |
 | `scripts/seed_ctfd.py` | Crea 5 challenges (100/150/200/250/300) y carga todas las flags por equipo. Idempotente. |
 | `scripts/watch_and_promote.py` | Polling a CTFd; promueve L→L+1; loguea first-blood. |
 | `scripts/deploy_target.sh <eq> <lvl>` | Decide local vs SSH: despliega en la VM del equipo (Propuesta 2) o local. |

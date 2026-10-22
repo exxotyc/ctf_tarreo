@@ -54,7 +54,7 @@ done
 step() { echo; echo "========================================"; echo "  $1"; echo "========================================"; }
 
 # ---- 1. Requisitos ----
-step "1/7  Verificando requisitos"
+step "1/7  Verificando requisitos (modo=$DEPLOY_MODE)"
 command -v docker >/dev/null || { echo "[-] falta docker"; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "[-] falta docker compose v2"; exit 1; }
 command -v python3 >/dev/null || { echo "[-] falta python3"; exit 1; }
@@ -64,6 +64,12 @@ for L in 1 2 3 4 5; do
   d=$(ls -d "$BASE"/cves/lvl${L}-* 2>/dev/null | head -1 || true)
   [[ -n "$d" ]] || { echo "[-] falta material del nivel $L en $BASE/cves/"; exit 1; }
 done
+if [[ "$DEPLOY_MODE" == "ssh" ]]; then
+  command -v ssh   >/dev/null || { echo "[-] modo ssh: falta ssh";   exit 1; }
+  command -v rsync >/dev/null || { echo "[-] modo ssh: falta rsync"; exit 1; }
+  any=0; for T in $(seq 1 "$NUM_TEAMS"); do v="TEAM${T}_HOST"; [[ -n "${!v:-}" ]] && any=1; done
+  [[ $any -eq 1 ]] || { echo "[-] modo ssh: no hay ningún TEAM<N>_HOST en config.env"; exit 1; }
+fi
 mkdir -p "$BASE/logs" "$BASE/flags" "$BASE/instances"
 echo "[+] OK (NUM_TEAMS=$NUM_TEAMS, CTFD_REPO=$CTFD_REPO, SERVER_IP=$SERVER_IP)"
 

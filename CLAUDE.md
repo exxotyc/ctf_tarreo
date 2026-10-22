@@ -66,6 +66,7 @@ Variantes: `--no-watch` (sin promotor), `--fresh` (regenera flags desde cero).
   `DRY_RUN=1` solo renderiza el YAML sin levantar.
 - `scripts/start_all_level1.sh` — Nivel 1 de todos los equipos.
 - `scripts/start_ctfd.sh` — levanta CTFd desde `CTFD_REPO`.
+- `scripts/setup_ctfd.sh [--no-seed]` — SOLO CTFd en un comando: levantar + admin/token + seed.
 - `scripts/setup_ctfd_admin.py` — crea admin y genera token API → `config.env`.
 - `scripts/seed_ctfd.py` — crea 5 challenges (100/150/200/250/300) + todas las flags.
 - `scripts/watch_and_promote.py` — promotor automático (correr en background).
