@@ -26,7 +26,7 @@ POINTS = {1: 100, 2: 150, 3: 200, 4: 250, 5: 300}
 def load_config():
     """Sourcea config.env en bash y devuelve las variables resueltas."""
     keys = ["NUM_TEAMS", "NUM_LEVELS", "CTFD_URL", "CTFD_TOKEN",
-            "PORT_BASE", "SMB_BIND_BASE", "SERVER_IP"]
+            "PORT_BASE", "SMB_BIND_BASE", "SERVER_IP", "VM_MODE", "TEAM_ID"]
     cmd = "source '%s' && for k in %s; do printf '%%s=%%s\\0' \"$k\" \"${!k}\"; done" % (
         CONFIG, " ".join(keys))
     out = subprocess.check_output(["bash", "-c", cmd])
@@ -44,6 +44,8 @@ def load_config():
     cfg["NUM_LEVELS"] = int(cfg["NUM_LEVELS"])
     cfg["PORT_BASE"] = int(cfg["PORT_BASE"])
     cfg["SMB_BIND_BASE"] = int(cfg["SMB_BIND_BASE"])
+    cfg.setdefault("VM_MODE", "central")
+    cfg.setdefault("TEAM_ID", "")
     return cfg
 
 

@@ -1,0 +1,32 @@
+# ============================================================
+#  ctf-tarreo.service — PLANTILLA
+# ------------------------------------------------------------
+#  install.sh genera la versión final con las rutas y el usuario
+#  correctos y la instala en /etc/systemd/system/ctf-tarreo.service
+#
+#  Para instalar manualmente (reemplazá las rutas):
+#    sudo cp ctf-tarreo.service /etc/systemd/system/
+#    sudo systemctl daemon-reload
+#    sudo systemctl enable --now ctf-tarreo
+# ============================================================
+[Unit]
+Description=CTF Tarreo — auto-arranque de contenedores y servicios
+Documentation=file:///REPO_DIR/README.md
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=INSTALL_USER
+WorkingDirectory=/REPO_DIR
+ExecStart=/REPO_DIR/scripts/autostart.sh
+ExecStop=/REPO_DIR/scripts/teardown.sh --all
+TimeoutStartSec=300
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ctf-tarreo
+
+[Install]
+WantedBy=multi-user.target

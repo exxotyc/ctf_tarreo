@@ -30,6 +30,18 @@ PROMO_LOG = os.path.join(LOG_DIR, "promotions.log")
 FB_LOG = os.path.join(LOG_DIR, "firstblood.log")
 DEPLOY = os.path.join(HERE, "deploy_target.sh")  # decide local vs SSH (VM del equipo)
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "7"))
+# Si se define TEAM_ID_FILTER (ej. en VM_MODE=team-vm), solo vigila ese equipo.
+TEAM_ID_FILTER = os.environ.get("TEAM_ID_FILTER", "")
+if not TEAM_ID_FILTER:
+    # Intentar leer de config.env (VM_MODE=team-vm)
+    try:
+        from ctf_common import load_config as _lc
+        _cfg = _lc()
+        if _cfg.get("VM_MODE", "central") == "team-vm":
+            TEAM_ID_FILTER = str(_cfg.get("TEAM_ID", ""))
+    except Exception:
+        pass
+TEAM_FILTER = int(TEAM_ID_FILTER) if TEAM_ID_FILTER else None
 
 
 def ts():
@@ -44,9 +56,10 @@ def log(path, msg):
 
 
 def build_flag_map(cfg):
-    """valor_flag -> (team, level)"""
+    """valor_flag -> (team, level). Si TEAM_FILTER está activo, solo ese equipo."""
     m = {}
-    for t in range(1, cfg["NUM_TEAMS"] + 1):
+    teams = [TEAM_FILTER] if TEAM_FILTER else range(1, cfg["NUM_TEAMS"] + 1)
+    for t in teams:
         for l in range(1, cfg["NUM_LEVELS"] + 1):
             try:
                 m[read_flag(t, l)] = (t, l)
