@@ -1,7 +1,0 @@
-version: '2'
-services:
- laravel_debug_rce:
-   build: .
-   image: vul/laravel_debug_rce
-   ports:
-    - "8888:8000"

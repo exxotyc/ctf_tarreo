@@ -29,8 +29,12 @@ def build_description(cfg, lvl_id, label, internal_port, scheme):
     lines = []
     lines.append("**%s**" % label)
     lines.append("")
-    lines.append("La flag está en `/flag.txt` dentro del contenedor. "
-                 "Solo se obtiene explotando el reto (no hay ruta HTTP directa).")
+    if lvl_id == 2:
+        lines.append("La flag está en `/usr/local/tomcat/flag.txt` (el directorio donde cae la "
+                     "shell): una vez con RCE, `cat flag.txt`. Solo se obtiene explotando el reto.")
+    else:
+        lines.append("La flag está en `/flag.txt` dentro del contenedor. "
+                     "Solo se obtiene explotando el reto (no hay ruta HTTP directa).")
     lines.append("")
     if scheme == "https":
         lines.append("> Nota: el servicio usa **HTTPS** con certificado autofirmado "

@@ -35,10 +35,12 @@ Variantes: `--no-watch` (sin promotor), `--fresh` (regenera flags desde cero).
   (red propia, sin choques). Nunca comparten contenedor.
 - **Puertos:** `HOST = 8000 + nivel*100 + equipo` → L1 8101-8105 … L5 8501-8505.
   Samba añade bind-shell `9000+500+equipo` → 9501-9505. CTFd en `:8000`.
-- **Flags:** siempre en `/flag.txt` dentro del contenedor, solo accesible tras explotar.
-  Niveles 1/2/3/5: `FLAG{team<N>_lvl<L>_<8hex>}` montada `:ro` desde
-  `flags/team<N>/lvl<L>/flag.txt`. Nivel 4 (php2shell): `php2shell{...<8hex>}` única por
-  equipo, inyectada por env `FLAG` (el contenedor escribe `/flag.txt` solo; NO se monta `:ro`).
+- **Flags:** en general en `/flag.txt`, solo accesible tras explotar.
+  Niveles 1/3/5: `FLAG{team<N>_lvl<L>_<8hex>}` montada `:ro` desde `flags/team<N>/lvl<L>/flag.txt`
+  → `/flag.txt`. **Nivel 2 (tomcat): EXCEPCIÓN** — misma flag y montaje `:ro` pero a
+  `/usr/local/tomcat/flag.txt` (el CWD de la shell; se lee con `cat flag.txt`). Nivel 4
+  (php2shell): `php2shell{...<8hex>}` única por equipo, inyectada por env `FLAG` (el contenedor
+  escribe `/flag.txt` solo; NO se monta `:ro`).
 - **Promoción:** `watch_and_promote.py` hace polling a CTFd; identifica equipo+nivel por el
   **valor de la flag enviada** (cada una es única) y despliega el nivel L+1 de ese equipo.
   Logs en `logs/promotions.log` y `logs/firstblood.log`.
@@ -47,7 +49,7 @@ Variantes: `--no-watch` (sin promotor), `--fresh` (regenera flags desde cero).
 | L | Carpeta `cves/` | Vuln | Tipo | Puerto interno |
 |:-:|---|---|---|:-:|
 | 1 | lvl1-apache-druid | CVE-2021-25646 (JS embebido) | RCE | 8888 http |
-| 2 | lvl2-laravel | CVE-2021-3129 (Laravel Ignition 2.5.1) | RCE | 80 http |
+| 2 | lvl2-tomcat | CVE-2017-12615/12617 (PUT JSP → RCE) | RCE | 8080 http |
 | 3 | lvl3-glassfish | CVE-2017-1000028 (UTF-8 overlong → traversal) | LFI | 4848 **https** |
 | 4 | lvl4-php2shell-ctf | session poisoning → LFI → RCE | RCE | 80 http (nginx+FPM) |
 | 5 | lvl5-samba | CVE-2017-7494 (SambaCry) | RCE | 445 SMB + 6699 |
@@ -70,13 +72,17 @@ Variantes: `--no-watch` (sin promotor), `--fresh` (regenera flags desde cero).
    incluido usa `ctf_pwn_session_1337` (con `_`) y **falla**; hay que usar un ID alfanumérico
    (ej. `ctfpwn1337`) y mandar el campo `PHP_SESSION_UPLOAD_PROGRESS` **antes** del fichero
    en el multipart. Cadena verificada end-to-end.
-2. **glassfish (lvl3):** es **HTTPS** en su puerto (usa `-k`/`verify=False`). `/flag.txt` en la
+2. **tomcat (lvl2):** CVE-2017-12615/12617, PUT de `.jsp` con `/` final → RCE (`poc.py -p pwn`).
+   La shell cae en **`/usr/local/tomcat`** (CWD) y queda confinada ahí, por eso la flag se monta
+   en `/usr/local/tomcat/flag.txt` (NO `/flag.txt`) y se lee con `cat flag.txt`. La imagen se
+   construye una vez como `ctf-tarreo-tomcat:lvl2` (deploy la cachea). Verificado end-to-end.
+3. **glassfish (lvl3):** es **HTTPS** en su puerto (usa `-k`/`verify=False`). `/flag.txt` en la
    raíz SÍ es alcanzable con el payload de 10×`../` (cada `../` = `%c0%ae%c0%ae/`); proceso root,
    flag `chmod 644`. No necesita excepción al path.
-3. **samba (lvl5):** SMB no es HTTP. El `payload.c` incluido apunta a `172.17.0.1`: cada equipo
+4. **samba (lvl5):** SMB no es HTTP. El `payload.c` incluido apunta a `172.17.0.1`: cada equipo
    debe recompilar su `.so` con SU IP (reverse) o usar bind-shell (`:950N`→6699). En una sola PC
    el SMB va en puertos altos (`:850N`), no 445 real por equipo.
-4. **Offline:** durante la competencia NO hay internet. Las imágenes deben estar pre-cargadas
+5. **Offline:** durante la competencia NO hay internet. Las imágenes deben estar pre-cargadas
    (ver README §1.bis, `docker save`/`docker load`). El build de CTFd y el pull de
    `php:8.2-fpm`/`nginx:alpine` ocurren en el setup previo con red.
 

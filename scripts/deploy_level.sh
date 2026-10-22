@@ -30,7 +30,7 @@ INST_DIR="$BASE/instances/team${T}/lvl${L}"
 CVE_DIR=""
 case "$L" in
   1) CVE_DIR="$BASE/cves/lvl1-apache-druid" ;;
-  2) CVE_DIR="$BASE/cves/lvl2-laravel" ;;
+  2) CVE_DIR="$BASE/cves/lvl2-tomcat" ;;
   3) CVE_DIR="$BASE/cves/lvl3-glassfish" ;;
   4) CVE_DIR="$BASE/cves/lvl4-php2shell-ctf" ;;
   5) CVE_DIR="$BASE/cves/lvl5-samba" ;;
@@ -58,14 +58,21 @@ services:
 EOF
     ;;
 
-  2)  # laravel CVE-2021-3129 Ignition RCE  (interno 80, worker www-data)
+  2)  # tomcat CVE-2017-12615/12617 PUT JSP RCE (interno 8080, proceso root)
+      # EXCEPCIÓN de path: el webshell ejecuta con CWD=/usr/local/tomcat y la shell
+      # queda confinada ahí, así que la flag se monta en ESE directorio (cat flag.txt).
+    TOMCAT_IMG="ctf-tarreo-tomcat:lvl2"
+    if ! docker image inspect "$TOMCAT_IMG" >/dev/null 2>&1; then
+      echo "[*] Construyendo imagen $TOMCAT_IMG (una sola vez, compartida por todos los equipos)..."
+      docker build -t "$TOMCAT_IMG" "$CVE_DIR"
+    fi
     cat > "$COMPOSE" <<EOF
 services:
-  web:
-    image: vulhub/laravel:8.4.2
-    ports: ["${HOST_PORT}:80"]
+  tomcat:
+    image: ${TOMCAT_IMG}
+    ports: ["${HOST_PORT}:8080"]
     volumes:
-      - "${FLAG_FILE}:/flag.txt:ro"
+      - "${FLAG_FILE}:/usr/local/tomcat/flag.txt:ro"
     restart: unless-stopped
 EOF
     ;;

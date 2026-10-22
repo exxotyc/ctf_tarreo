@@ -15,7 +15,7 @@ CONFIG = os.path.join(BASE, "config.env")
 # Niveles: (id, nombre_carpeta, etiqueta_corta, puerto_interno, esquema)
 LEVELS = [
     (1, "lvl1-apache-druid", "Apache Druid (CVE-2021-25646) — RCE",    8888, "http"),
-    (2, "lvl2-laravel",      "Laravel Ignition (CVE-2021-3129) — RCE", 80,   "http"),
+    (2, "lvl2-tomcat",       "Apache Tomcat (CVE-2017-12615) — RCE",   8080, "http"),
     (3, "lvl3-glassfish",    "GlassFish (CVE-2017-1000028) — LFI",     4848, "https"),
     (4, "lvl4-php2shell-ctf","php2shell — session poison -> LFI -> RCE",80,  "http"),
     (5, "lvl5-samba",        "Samba (CVE-2017-7494) — RCE",            445,  "smb"),

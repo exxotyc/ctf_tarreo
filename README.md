@@ -56,17 +56,20 @@ python3 -c 'import requests' || pip install requests
 | L | Carpeta | CVE / vector | Tipo | Puerto interno |
 |:-:|---------|--------------|------|:--------------:|
 | 1 | `lvl1-apache-druid`  | CVE-2021-25646 (JS embebido) | RCE | 8888 (HTTP) |
-| 2 | `lvl2-laravel`       | **CVE-2021-3129** (Laravel Ignition 2.5.1) | RCE | 80 (HTTP) |
+| 2 | `lvl2-tomcat`        | **CVE-2017-12615/12617** (PUT JSP → RCE) | RCE | 8080 (HTTP) |
 | 3 | `lvl3-glassfish`     | CVE-2017-1000028 (UTF-8 overlong → traversal) | LFI | 4848 (**HTTPS**) |
 | 4 | `lvl4-php2shell-ctf` | session poisoning → LFI → RCE | RCE | 80 (HTTP, nginx+FPM) |
 | 5 | `lvl5-samba`         | CVE-2017-7494 (SambaCry) | RCE | 445 (SMB) + 6699 |
 
 ### Convención de flag
 
-- Todas en **`/flag.txt`** dentro del contenedor, **nunca** accesible por HTTP sin explotar.
-- Niveles 1,2,3,5: `FLAG{team<N>_lvl<L>_<8hex>}`, montada **read-only** desde
+- En general en **`/flag.txt`** dentro del contenedor, **nunca** accesible por HTTP sin explotar.
+- Niveles 1,3,5: `FLAG{team<N>_lvl<L>_<8hex>}`, montada **read-only** desde
   `flags/team<N>/lvl<L>/flag.txt → /flag.txt:ro`. `chmod 644` (el proceso que obtiene la
-  shell — root / www-data — la puede leer).
+  shell — root — la puede leer).
+- **Nivel 2 (tomcat) — EXCEPCIÓN de path:** misma `FLAG{...}` y mismo montaje `:ro`, pero a
+  **`/usr/local/tomcat/flag.txt`** (el CWD del proceso Tomcat), porque la shell del `poc.py`
+  queda confinada a ese directorio. Se lee con `cat flag.txt` (relativo).
 - Nivel 4: `php2shell{s3ss10n_p01s0n_t0_lf1_t0_rce_<8hex>}`, **única por equipo**. No se monta
   volumen RO porque el contenedor **escribe** `/flag.txt` él mismo desde la env `FLAG`; el
   script `deploy_level.sh` lee `flags/team<N>/lvl4/flag.txt` y la inyecta como `FLAG=...`.
@@ -92,7 +95,7 @@ python3 -c 'import requests' || pip install requests
 | Nivel \ Equipo | 1 | 2 | 3 | 4 | 5 |
 |----------------|:--:|:--:|:--:|:--:|:--:|
 | **L1** druid (http)      | 8101 | 8102 | 8103 | 8104 | 8105 |
-| **L2** laravel (http)    | 8201 | 8202 | 8203 | 8204 | 8205 |
+| **L2** tomcat (http)     | 8201 | 8202 | 8203 | 8204 | 8205 |
 | **L3** glassfish (https) | 8301 | 8302 | 8303 | 8304 | 8305 |
 | **L4** php2shell (http)  | 8401 | 8402 | 8403 | 8404 | 8405 |
 | **L5** samba SMB         | 8501 | 8502 | 8503 | 8504 | 8505 |
@@ -135,7 +138,7 @@ romper lo que ya funciona. El desglose manual (por si quieres control fino) est�
    - *Server sin internet (offline):* pre-cárgalas desde una máquina con red:
      ```bash
      # en una máquina con internet (una vez):
-     docker save vulhub/apache-druid:0.20.0 vulhub/laravel:8.4.2 \
+     docker save vulhub/apache-druid:0.20.0 vulhub/tomcat:8.5.19 \
                  vulhub/glassfish:4.1 vulhub/samba:4.6.3 \
                  php:8.2-fpm nginx:alpine -o ctf-images.tar
      # (además, construye la imagen de CTFd y guárdala:)
@@ -217,9 +220,11 @@ que llega hasta `/flag.txt`. Levanta lo que necesites con `scripts/deploy_level.
       con 5 flags cada uno (`python3 scripts/seed_ctfd.py` sin errores).
 - [ ] **L1 druid** (`:8101`): RCE JS en `POST /druid/indexer/v1/sampler`; el proceso es **root**;
       `docker exec team1_lvl1-web-1 cat /flag.txt` ✔. Exploit: ver `cves/lvl1-apache-druid/poc.py`.
-- [ ] **L2 laravel** (`:8201`): Ignition RCE (CVE-2021-3129) con `laravel-exploits/` + `phpggc`
-      (`Laravel/RCE`). El worker es www-data → `/flag.txt` 644 legible. Comando sugerido en
-      `cves/lvl2-laravel/CVE-2021-3129/README.md`.
+- [ ] **L2 tomcat** (`:8201`): PUT de un `.jsp` con `/` final (CVE-2017-12615/12617) → RCE vía
+      `Runtime.exec`. El proceso es **root** con **CWD=`/usr/local/tomcat`**. **EXCEPCIÓN de path:**
+      la flag se monta en `/usr/local/tomcat/flag.txt` (no en `/flag.txt`) porque la shell del
+      `poc.py` queda confinada a ese directorio → se lee con **`cat flag.txt`** (relativo).
+      Exploit incluido: `cves/lvl2-tomcat/poc.py -u http://<ip>:8201 -p pwn`. Verificado end-to-end.
 - [ ] **L3 glassfish** (`https://:8301`, `-k`): el payload de 10×`../` con overlong encoding
       debe devolver el contenido de `/flag.txt` (ver payload arriba). Confirma que `root` corre
       el server y que `flag.txt` es 644.
