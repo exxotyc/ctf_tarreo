@@ -28,7 +28,7 @@ LOG_DIR = os.path.join(BASE, "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 PROMO_LOG = os.path.join(LOG_DIR, "promotions.log")
 FB_LOG = os.path.join(LOG_DIR, "firstblood.log")
-DEPLOY = os.path.join(HERE, "deploy_level.sh")
+DEPLOY = os.path.join(HERE, "deploy_target.sh")  # decide local vs SSH (VM del equipo)
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "7"))
 
 
