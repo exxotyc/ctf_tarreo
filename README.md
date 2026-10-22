@@ -208,6 +208,7 @@ scripts/teardown.sh --ctfd    # instancias + CTFd
 | `scripts/seed_ctfd.py` | Crea 5 challenges (100/150/200/250/300) y carga todas las flags por equipo. Idempotente. |
 | `scripts/watch_and_promote.py` | Polling a CTFd; promueve L→L+1; loguea first-blood. |
 | `scripts/teardown.sh [--ctfd|--all]` | Baja y limpia todo (`down -v`). |
+| `scripts/firewall_isolation.sh {apply|clear|status|print}` | Firewall por IP: cada equipo solo alcanza SUS puertos (sudo). |
 
 ---
 
@@ -259,6 +260,30 @@ debe apuntar a ese puerto (`-p 850N`) o usar una redirección local. Si prefiere
 equipo, hazlo desde máquinas/VLAN distintas por equipo; en una sola PC se usan los puertos altos.
 
 ---
+
+
+## 4.bis  Aislamiento de red entre equipos (single-host)
+
+Por defecto, en un solo host **todos los contenedores se publican en la misma IP** (puertos
+distintos) y son mutuamente accesibles: un equipo podría conectarse al puerto de otro. Para
+impedirlo sin VLANs/OPNsense, `firewall_isolation.sh` instala reglas en la cadena `DOCKER-USER`
+que, por **IP de origen de cada equipo**, solo permiten sus puertos y bloquean el resto. CTFd
+(`:8000`) queda abierto a todos (envío de flags).
+
+```bash
+# 1) En config.env define la IP (o CIDR) de cada equipo:
+#    TEAM1_IP=10.10.0.11   TEAM2_IP=10.10.0.12  ...
+# 2) Aplica (requiere root):
+sudo scripts/firewall_isolation.sh apply
+scripts/firewall_isolation.sh status      # ver reglas
+scripts/firewall_isolation.sh print       # dry-run (sin root)
+sudo scripts/firewall_isolation.sh clear   # quitar
+```
+Verificación el día del evento: desde la máquina de un equipo, `nc -vz <host> <puerto_propio>`
+debe conectar y `<puerto_de_otro_equipo>` debe fallar.
+
+> Nota: esto cubre el acceso **participante → contenedor**. El aislamiento contenedor↔contenedor
+> ya lo da Docker (cada `teamN_lvlL` tiene su red propia). Reaplica `apply` si redeployas puertos.
 
 ## 5. Restricciones y robustez
 

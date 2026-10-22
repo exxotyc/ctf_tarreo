@@ -65,6 +65,7 @@ Variantes: `--no-watch` (sin promotor), `--fresh` (regenera flags desde cero).
 - `scripts/seed_ctfd.py` — crea 5 challenges (100/150/200/250/300) + todas las flags.
 - `scripts/watch_and_promote.py` — promotor automático (correr en background).
 - `scripts/teardown.sh [--ctfd|--all]` — baja y limpia (`down -v`).
+- `scripts/firewall_isolation.sh {apply|clear|status|print}` — aísla por IP: cada equipo solo sus puertos (sudo, cadena DOCKER-USER).
 - `scripts/ctf_common.py` — utilidades compartidas (carga config, cliente CTFd API).
 
 ## GOTCHAS verificados (importan para que el CTF sea justo)
