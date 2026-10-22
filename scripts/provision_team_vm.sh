@@ -32,12 +32,21 @@ provision_one() {
   local SSHCMD="ssh $SSH_OPTS $KEYOPT"
 
   $SSHCMD "${SSH_USER}@${HOST}" "mkdir -p '${REMOTE_BASE}/flags'"
+
+  # config.env SANEADO: la VM de equipo no necesita token ni password de CTFd.
+  local TMPCFG; TMPCFG="$(mktemp)"
+  sed -E -e 's|^CTFD_TOKEN=.*|CTFD_TOKEN=""|' \
+         -e 's|^CTFD_ADMIN_PASSWORD=.*|CTFD_ADMIN_PASSWORD=""|' \
+         "$BASE/config.env" > "$TMPCFG"
+
   # repo base (sin flags de otros equipos, sin estado runtime)
   rsync -az --delete -e "$SSHCMD" \
     --exclude 'flags/' --exclude 'instances/' --exclude 'logs/' \
     --exclude 'ctfd/' --exclude '.git/' \
-    "$BASE/scripts" "$BASE/cves" "$BASE/config.env" \
+    "$BASE/scripts" "$BASE/cves" \
     "${SSH_USER}@${HOST}:${REMOTE_BASE}/"
+  rsync -az -e "$SSHCMD" "$TMPCFG" "${SSH_USER}@${HOST}:${REMOTE_BASE}/config.env"
+  rm -f "$TMPCFG"
   # SOLO las flags de este equipo
   rsync -az --delete --relative -e "$SSHCMD" \
     "$BASE/./flags/team${T}" \
